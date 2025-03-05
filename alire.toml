@@ -1,0 +1,12 @@
+name = "keepass_client"
+description = "Keepass database client"
+version = "0.1.0-dev"
+
+authors = ["torunar"]
+maintainers = ["torunar <torunar@gmail.com>"]
+maintainers-logins = ["torunar"]
+licenses = "MIT"
+website = ""
+tags = []
+
+executables = ["keepass_client"]
