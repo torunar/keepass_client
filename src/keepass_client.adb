@@ -10,4 +10,6 @@ begin
 
    Put_Line (Is_Keepass_Database (Database_File)'Image);
    Put_Line ("Version:" & Get_Version (Database_File)'Image);
+
+   Dump_Header (Database_File);
 end Keepass_Client;
