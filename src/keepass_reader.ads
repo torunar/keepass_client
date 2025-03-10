@@ -1,12 +1,9 @@
 with Ada.Streams.Stream_IO; use Ada.Streams.Stream_IO;
+with Primitives; use Primitives;
 
 package Keepass_Reader is
 
    package Stream_IO renames Ada.Streams.Stream_IO;
-
-   type UInt32 is mod 2 ** 32;
-
-   type UInt16 is mod 2 ** 16;
 
    type Version is record
       Major : UInt16;

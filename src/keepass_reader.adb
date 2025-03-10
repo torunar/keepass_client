@@ -33,47 +33,8 @@ package body Keepass_Reader is
    end Get_Version;
 
    procedure Dump_Header (Database_File : Stream_IO.File_Type) is
-      Raw_Field_Id : Byte;
-      Length : UInt32;
-      Data_Stream : constant Stream_IO.Stream_Access := Stream_IO.Stream (Database_File);
    begin
-      Set_Index (Database_File, 13);
-
-      loop
-         Byte'Read (Data_Stream, Raw_Field_Id);
-         UInt32'Read (Data_Stream, Length);
-
-         Put_Line (Get_Field_Id (Raw_Field_Id)'Image & ":" & Length'Image);
-
-         case Get_Field_Id (Raw_Field_Id) is
-         when End_Of_Header =>
-            declare
-               End_Of_Header_Field_Value : End_Of_Header_Field;
-            begin
-               End_Of_Header_Field'Read (Data_Stream, End_Of_Header_Field_Value);
-               Put_Line (End_Of_Header_Field_Value'Image);
-               exit;
-            end;
-         when Encryption_Algorithm =>
-            declare
-               Encryption_Algorithm_UUID : UUID;
-            begin
-               UUID'Read (Data_Stream, Encryption_Algorithm_UUID);
-               Put_Line (Get_Encryption_Algorithm (Encryption_Algorithm_UUID)'Image);
-            end;
-         when others =>
-            Put_Line ("Not implemented");
-            declare
-               Unusued_Buffer : Byte;
-            begin
-               for I in 1 .. Length loop
-                  Byte'Read (Data_Stream, Unusued_Buffer);
-               end loop;
-            end;
-         end case;
-
-         Put_Line("");
-      end loop;
+      Put_Line (Get_Header (Database_File)'Image);
    end Dump_Header;
 
 end Keepass_Reader;
