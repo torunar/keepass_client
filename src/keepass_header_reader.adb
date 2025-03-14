@@ -1,4 +1,44 @@
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body Keepass_Header_Reader is
+
+   function Get_Header (Database_File : Stream_IO.File_Type) return Database_Header is
+      Header : Database_Header;
+      Raw_Field_Id : Byte;
+      Length : UInt32;
+      Data_Stream : constant Stream_IO.Stream_Access := Stream_IO.Stream (Database_File);
+   begin
+      Set_Index (Database_File, 13);
+
+      loop
+         Byte'Read (Data_Stream, Raw_Field_Id);
+         UInt32'Read (Data_Stream, Length);
+
+         case Get_Field_Id (Raw_Field_Id) is
+         when Encryption_Algorithm =>
+            Read_Encryption_Algorithm (Data_Stream, Header);
+         when Compression_Algorithm =>
+            Read_Compression_Algorithm (Data_Stream, Header);
+         when Master_Salt =>
+            Salt'Read (Data_Stream, Header.Master_Salt);
+         when Encryption_IV =>
+            Read_Encryption_IV (Data_Stream, Header);
+         when KDF_Parameters =>
+            Read_KDF_Parameters (Data_Stream, Header);
+         when Public_Custom_Data =>
+            null;
+         when End_Of_Header =>
+            declare
+               End_Of_Header_Field_Value : End_Of_Header_Field := [others => 0];
+            begin
+               End_Of_Header_Field'Read (Data_Stream, End_Of_Header_Field_Value);
+               exit;
+            end;
+         end case;
+      end loop;
+
+      return Header;
+   end Get_Header;
 
    function Get_Field_Id (Raw_Value : Byte) return Field_Id is
    begin
@@ -52,57 +92,63 @@ package body Keepass_Header_Reader is
       return Raw_Value = [0, 0, 0, 0];
    end Is_Valid_End_Of_Header;
 
-   function Get_Header (Database_File : Stream_IO.File_Type) return Database_Header is
-      Header : Database_Header;
-      Raw_Field_Id : Byte;
-      Length : UInt32;
-      Data_Stream : constant Stream_IO.Stream_Access := Stream_IO.Stream (Database_File);
+   procedure Read_Encryption_Algorithm (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header) is
+      Raw_Value : UUID;
    begin
-      Set_Index (Database_File, 13);
+      UUID'Read (Data_Stream, Raw_Value);
+      Header.Encryption_Algorithm := Get_Encryption_Algorithm (Raw_Value);
+   end Read_Encryption_Algorithm;
 
-      loop
-         Byte'Read (Data_Stream, Raw_Field_Id);
-         UInt32'Read (Data_Stream, Length);
+   procedure Read_Compression_Algorithm (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header) is
+      Raw_Value : UInt32;
+   begin
+      UInt32'Read (Data_Stream, Raw_Value);
+      Header.Compression_Algorithm := Get_Compression_Algorithm (Raw_Value);
+   end;
 
-         case Get_Field_Id (Raw_Field_Id) is
-         when Encryption_Algorithm =>
-            declare
-               Raw_Value : UUID;
-            begin
-               UUID'Read (Data_Stream, Raw_Value);
-               Header.Encryption_Algorithm := Get_Encryption_Algorithm (Raw_Value);
-            end;
-         when Compression_Algorithm =>
-            declare
-               Raw_Value : UInt32;
-            begin
-               UInt32'Read (Data_Stream, Raw_Value);
-               Header.Compression_Algorithm := Get_Compression_Algorithm (Raw_Value);
-            end;
-         when Master_Salt =>
-            Salt'Read (Data_Stream, Header.Master_Salt);
-         when Encryption_IV =>
-            case Header.Encryption_Algorithm is
-            when AES_256 =>
-               Initialization_Vector_AES_256'Read (Data_Stream, Header.Encryption_IV_AES_256);
-            when Cha_Cha_20 =>
-               Initialization_Vector_Cha_Cha_20'Read (Data_Stream, Header.Encryption_IV_Cha_Cha_20);
-            end case;
-         when KDF_Parameters =>
-            null;
-         when Public_Custom_Data =>
-            null;
-         when End_Of_Header =>
-            declare
-               End_Of_Header_Field_Value : End_Of_Header_Field := [others => 0];
-            begin
-               End_Of_Header_Field'Read (Data_Stream, End_Of_Header_Field_Value);
-               exit;
-            end;
-         end case;
-      end loop;
+   procedure Read_Encryption_IV (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header) is
+      AES_Length : constant Positive := 16;
+      Cha_Cha_20_Length : constant Positive := 12;
+   begin
+      case Header.Encryption_Algorithm is
+         when AES_256 =>
+            Header.Encryption_IV := new Byte_Array (1 .. AES_Length);
+            for I in 1 .. AES_Length loop
+               Byte'Read (Data_Stream, Header.Encryption_IV (I));
+            end loop;
+         when Cha_Cha_20 =>
+            Header.Encryption_IV := new Byte_Array (1 .. Cha_Cha_20_Length);
+            for I in 1 .. Cha_Cha_20_Length loop
+               Byte'Read (Data_Stream, Header.Encryption_IV (I));
+            end loop;
+      end case;
+   end Read_Encryption_IV;
 
-      return Header;
-   end Get_Header;
+   procedure Read_KDF_Parameters (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header) is
+      KDF_Dictionary_Version : Dictionary_Version;
+      Value_Type : Byte;
+      Name_Size : UInt32;
+      Value_Size : UInt32;
+   begin
+      Byte'Read (Data_Stream, KDF_Dictionary_Version.Minor);
+      Byte'Read (Data_Stream, KDF_Dictionary_Version.Major);
+      Put_Line (KDF_Dictionary_Version'Image);
+
+      Byte'Read (Data_Stream, Value_Type);
+      UInt32'Read (Data_Stream, Name_Size);
+      Put_Line (
+                "Item of type"
+                & Value_Type'Image
+                & " and name size of"
+                & Name_Size'Image
+               );
+
+      declare
+         Name : String (1 .. Positive(Name_Size));
+      begin
+         String'Read (Data_Stream, Name);
+         Put_Line(Name);
+      end;
+   end Read_KDF_Parameters;
 
 end Keepass_Header_Reader;

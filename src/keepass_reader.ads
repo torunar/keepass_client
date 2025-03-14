@@ -12,10 +12,8 @@ package Keepass_Reader is
 
    Not_A_Keepass_Database : exception;
 
-   --  0x9AA2D903
-   Expected_Signature_1 : constant UInt32 := 2594363651;
-   --  0xB54BFB67
-   Expected_Signature_2 : constant UInt32 := 3041655655;
+   Expected_Signature_1 : constant UInt32 := 2594363651; -- 0x9AA2D903
+   Expected_Signature_2 : constant UInt32 := 3041655655; -- 0xB54BFB67
 
    function Is_Keepass_Database (Database_File : Stream_IO.File_Type) return Boolean;
 

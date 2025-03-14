@@ -8,7 +8,6 @@ procedure Keepass_Client is
 begin
    Stream_IO.Open (Database_File, Stream_IO.In_File, Database_Path);
 
-   Put_Line (Is_Keepass_Database (Database_File)'Image);
    Put_Line ("Version:" & Get_Version (Database_File)'Image);
 
    Dump_Header (Database_File);
