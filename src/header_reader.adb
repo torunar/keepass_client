@@ -1,6 +1,6 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
-package body Keepass_Header_Reader is
+package body Header_Reader is
 
    function Get_Header (Database_File : Stream_IO.File_Type) return Database_Header is
       Header : Database_Header;
@@ -104,9 +104,9 @@ package body Keepass_Header_Reader is
    begin
       UInt32'Read (Data_Stream, Raw_Value);
       Header.Compression_Algorithm := Get_Compression_Algorithm (Raw_Value);
-   end;
+   end Read_Compression_Algorithm;
 
-   procedure Read_Encryption_IV (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header) is
+   procedure Read_Encryption_IV (Data_Stream : Stream_IO.Stream_Access; Header : in out Database_Header) is
       AES_Length : constant Positive := 16;
       Cha_Cha_20_Length : constant Positive := 12;
    begin
@@ -125,30 +125,54 @@ package body Keepass_Header_Reader is
    end Read_Encryption_IV;
 
    procedure Read_KDF_Parameters (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header) is
-      KDF_Dictionary_Version : Dictionary_Version;
       Value_Type : Byte;
       Name_Size : UInt32;
       Value_Size : UInt32;
+      Unused_KDF : KDF;
+      Unused_Buffer : Byte;
    begin
-      Byte'Read (Data_Stream, KDF_Dictionary_Version.Minor);
-      Byte'Read (Data_Stream, KDF_Dictionary_Version.Major);
-      Put_Line (KDF_Dictionary_Version'Image);
+      Byte'Read (Data_Stream, Unused_KDF.Version.Minor);
+      Byte'Read (Data_Stream, Unused_KDF.Version.Major);
 
-      Byte'Read (Data_Stream, Value_Type);
-      UInt32'Read (Data_Stream, Name_Size);
-      Put_Line (
-                "Item of type"
-                & Value_Type'Image
-                & " and name size of"
-                & Name_Size'Image
-               );
+      loop
+         Byte'Read (Data_Stream, Value_Type);
+
+         exit when Value_Type = 0;
+
+         UInt32'Read (Data_Stream, Name_Size);
+
+         declare
+            Name : String (1 .. Positive (Name_Size));
+         begin
+            String'Read (Data_Stream, Name);
+            UInt32'Read (Data_Stream, Value_Size);
+
+            Put_Line ("Item with name " & Name & " and size of" & Value_Size'Image);
+
+            if Name = "$UUID" then
+               Read_KDF_UUID (Data_Stream, Unused_KDF);
+            else
+               for I in 1 .. Value_Size loop
+                  Byte'Read (Data_Stream, Unused_Buffer);
+               end loop;
+            end if;
+         end;
+      end loop;
 
       declare
-         Name : String (1 .. Positive(Name_Size));
+         Unused_Argon : Argon_2_Acc;
       begin
-         String'Read (Data_Stream, Name);
-         Put_Line(Name);
+         Unused_Argon := new Argon_2'(
+                                      Version => Unused_KDF.Version,
+                                      UUID => Unused_KDF.UUID,
+                                      Salt => null,
+                                      Argon_Version => 0,
+                                      Iterations => 0,
+                                      Memory => 0,
+                                      Parallelism => 0
+                                     );
+         Header.KDF_Parameters := KDF_Acc (Unused_Argon);
       end;
    end Read_KDF_Parameters;
 
-end Keepass_Header_Reader;
+end Header_Reader;

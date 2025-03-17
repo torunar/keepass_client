@@ -2,7 +2,7 @@ with Ada.Streams.Stream_IO; use Ada.Streams.Stream_IO;
 with Primitives; use Primitives;
 with KDF_Reader; use KDF_Reader;
 
-package Keepass_Header_Reader is
+package Header_Reader is
 
    package Stream_IO renames Ada.Streams.Stream_IO;
 
@@ -31,7 +31,7 @@ package Keepass_Header_Reader is
       Compression_Algorithm : Compression_Algorithms;
       Master_Salt : Salt := [others => 0];
       Encryption_IV : Initialization_Vector_Acc;
-      KDF_Parameters : Boolean;
+      KDF_Parameters : KDF_Acc;
       Public_Custom_Data : Boolean;
    end record;
 
@@ -53,8 +53,8 @@ package Keepass_Header_Reader is
 
    procedure Read_Compression_Algorithm (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header);
 
-   procedure Read_Encryption_IV (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header);
+   procedure Read_Encryption_IV (Data_Stream : Stream_IO.Stream_Access; Header : in out Database_Header);
 
    procedure Read_KDF_Parameters (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header);
 
-end Keepass_Header_Reader;
+end Header_Reader;

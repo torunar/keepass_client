@@ -1,5 +1,5 @@
 with Ada.Text_IO; use Ada.Text_IO;
-with Keepass_Header_Reader; use Keepass_Header_Reader;
+with Header_Reader; use Header_Reader;
 
 package body Keepass_Reader is
 
