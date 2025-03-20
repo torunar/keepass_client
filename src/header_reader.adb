@@ -1,3 +1,5 @@
+with Variant_Dictionary;
+
 package body Header_Reader is
 
    function Get_Header (Database_File : File_Type) return Database_Header is
@@ -128,7 +130,7 @@ package body Header_Reader is
       Byte'Read (Data_Stream, Header.KDF_Parameters.Version.Minor);
       Byte'Read (Data_Stream, Header.KDF_Parameters.Version.Major);
 
-      Header.KDF_Parameters.Values := Get_KDF_Parameters (Data_Stream);
+      Header.KDF_Parameters.Values := Variant_Dictionary.Read (Data_Stream);
       Header.KDF_Parameters.UUID := Get_KDF_UUID (Header.KDF_Parameters.Values ("$UUID"));
    end Read_KDF_Parameters;
 

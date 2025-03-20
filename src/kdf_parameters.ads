@@ -21,8 +21,6 @@ package KDF_Parameters is
    procedure Read_KDF_UUID (Data_Stream : Stream_Access; Value : in out KDF);
    
    function Get_KDF_UUID (Raw_Value : UUID) return KDF_UUID;
-   
-   function Get_KDF_Parameters (Data_Stream : Stream_Access) return Byte_Array_Maps.Map;
 
 private
 

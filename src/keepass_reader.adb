@@ -1,12 +1,9 @@
-with Ada.Text_IO; use Ada.Text_IO;
-with Header_Reader; use Header_Reader;
-
 package body Keepass_Reader is
 
-   function Is_Keepass_Database (Database_File : Ada.Streams.Stream_IO.File_Type) return Boolean is
+   function Is_Keepass_Database (Database_File : File_Type) return Boolean is
       Signature_1 : UInt32;
       Signature_2 : UInt32;
-      Data_Stream : constant Ada.Streams.Stream_IO.Stream_Access := Ada.Streams.Stream_IO.Stream (Database_File);
+      Data_Stream : constant Stream_Access := Stream (Database_File);
    begin
       Set_Index (Database_File, 1);
       UInt32'Read (Data_Stream, Signature_1);
@@ -16,10 +13,10 @@ package body Keepass_Reader is
         and then Signature_2 = Expected_Signature_2;
    end Is_Keepass_Database;
 
-   function Get_Version (Database_File : Ada.Streams.Stream_IO.File_Type) return Version is
+   function Get_Version (Database_File : File_Type) return Version is
       Major_Version : UInt16;
       Minor_Version : UInt16;
-      Data_Stream : constant Ada.Streams.Stream_IO.Stream_Access := Ada.Streams.Stream_IO.Stream (Database_File);
+      Data_Stream : constant Stream_Access := Stream (Database_File);
    begin
       if not Is_Keepass_Database (Database_File) then
          raise Not_A_Keepass_Database;
@@ -31,10 +28,5 @@ package body Keepass_Reader is
 
       return (Major_Version, Minor_Version);
    end Get_Version;
-
-   procedure Dump_Header (Database_File : Ada.Streams.Stream_IO.File_Type) is
-   begin
-      Put_Line (Get_Header (Database_File)'Image);
-   end Dump_Header;
 
 end Keepass_Reader;

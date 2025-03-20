@@ -14,8 +14,6 @@ package Keepass_Reader is
 
    function Get_Version (Database_File : File_Type) return Version;
 
-   procedure Dump_Header (Database_File : File_Type);
-
 private
 
    Expected_Signature_1 : constant UInt32 := 2594363651; -- 0x9AA2D903
