@@ -1,12 +1,10 @@
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body Header_Reader is
 
-   function Get_Header (Database_File : Stream_IO.File_Type) return Database_Header is
+   function Get_Header (Database_File : File_Type) return Database_Header is
       Header : Database_Header;
       Raw_Field_Id : Byte;
       Length : UInt32;
-      Data_Stream : constant Stream_IO.Stream_Access := Stream_IO.Stream (Database_File);
+      Data_Stream : constant Stream_Access := Stream (Database_File);
    begin
       Set_Index (Database_File, 13);
 
@@ -92,21 +90,21 @@ package body Header_Reader is
       return Raw_Value = [0, 0, 0, 0];
    end Is_Valid_End_Of_Header;
 
-   procedure Read_Encryption_Algorithm (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header) is
+   procedure Read_Encryption_Algorithm (Data_Stream : Stream_Access; Header : out Database_Header) is
       Raw_Value : UUID;
    begin
       UUID'Read (Data_Stream, Raw_Value);
       Header.Encryption_Algorithm := Get_Encryption_Algorithm (Raw_Value);
    end Read_Encryption_Algorithm;
 
-   procedure Read_Compression_Algorithm (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header) is
+   procedure Read_Compression_Algorithm (Data_Stream : Stream_Access; Header : out Database_Header) is
       Raw_Value : UInt32;
    begin
       UInt32'Read (Data_Stream, Raw_Value);
       Header.Compression_Algorithm := Get_Compression_Algorithm (Raw_Value);
    end Read_Compression_Algorithm;
 
-   procedure Read_Encryption_IV (Data_Stream : Stream_IO.Stream_Access; Header : in out Database_Header) is
+   procedure Read_Encryption_IV (Data_Stream : Stream_Access; Header : in out Database_Header) is
       AES_Length : constant Positive := 16;
       Cha_Cha_20_Length : constant Positive := 12;
    begin
@@ -124,55 +122,14 @@ package body Header_Reader is
       end case;
    end Read_Encryption_IV;
 
-   procedure Read_KDF_Parameters (Data_Stream : Stream_IO.Stream_Access; Header : out Database_Header) is
-      Value_Type : Byte;
-      Name_Size : UInt32;
-      Value_Size : UInt32;
-      Unused_KDF : KDF;
-      Unused_Buffer : Byte;
+   procedure Read_KDF_Parameters (Data_Stream : Stream_Access; Header : out Database_Header) is
+      Basic_KDF : KDF;
    begin
-      Byte'Read (Data_Stream, Unused_KDF.Version.Minor);
-      Byte'Read (Data_Stream, Unused_KDF.Version.Major);
+      Byte'Read (Data_Stream, Header.KDF_Parameters.Version.Minor);
+      Byte'Read (Data_Stream, Header.KDF_Parameters.Version.Major);
 
-      loop
-         Byte'Read (Data_Stream, Value_Type);
-
-         exit when Value_Type = 0;
-
-         UInt32'Read (Data_Stream, Name_Size);
-
-         declare
-            Name : String (1 .. Positive (Name_Size));
-         begin
-            String'Read (Data_Stream, Name);
-            UInt32'Read (Data_Stream, Value_Size);
-
-            Put_Line ("Item with name " & Name & " and size of" & Value_Size'Image);
-
-            if Name = "$UUID" then
-               Read_KDF_UUID (Data_Stream, Unused_KDF);
-            else
-               for I in 1 .. Value_Size loop
-                  Byte'Read (Data_Stream, Unused_Buffer);
-               end loop;
-            end if;
-         end;
-      end loop;
-
-      declare
-         Unused_Argon : Argon_2_Acc;
-      begin
-         Unused_Argon := new Argon_2'(
-                                      Version => Unused_KDF.Version,
-                                      UUID => Unused_KDF.UUID,
-                                      Salt => null,
-                                      Argon_Version => 0,
-                                      Iterations => 0,
-                                      Memory => 0,
-                                      Parallelism => 0
-                                     );
-         Header.KDF_Parameters := KDF_Acc (Unused_Argon);
-      end;
+      Header.KDF_Parameters.Values := Get_KDF_Parameters (Data_Stream);
+      Header.KDF_Parameters.UUID := Get_KDF_UUID (Header.KDF_Parameters.Values ("$UUID"));
    end Read_KDF_Parameters;
 
 end Header_Reader;
