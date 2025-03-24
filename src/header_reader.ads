@@ -1,10 +1,11 @@
 with Ada.Streams.Stream_IO; use Ada.Streams.Stream_IO;
 with Primitives; use Primitives;
 with KDF_Parameters; use KDF_Parameters;
+with Variant_Dictionary;
 
 package Header_Reader is
 
-   subtype End_Of_Header_Field is Byte_Array (1 .. 4);
+   subtype End_Of_Header_Value is Byte_Array (1 .. 4);
    subtype Salt is Byte_Array (1 .. 32);
 
    type Field_Id is (End_Of_Header, Encryption_Algorithm, Compression_Algorithm, Master_Salt, Encryption_IV, KDF_Parameters, Public_Custom_Data);
@@ -13,13 +14,19 @@ package Header_Reader is
 
    type Compression_Algorithms is (No_Compression, GZip);
 
+   type Public_Custom_Data_Collection is record
+      Version : Variant_Dictionary.Verion;
+      Values : Byte_Array_Maps.Map;
+   end record;
+
    type Database_Header is record
       Encryption_Algorithm : Encryption_Algorithms;
       Compression_Algorithm : Compression_Algorithms;
       Master_Salt : Salt := [others => 0];
       Encryption_IV : Byte_Array_Acc;
       KDF_Parameters : KDF;
-      Public_Custom_Data : Boolean;
+      Public_Custom_Data : Public_Custom_Data_Collection;
+      End_Of_Header : End_Of_Header_Value;
    end record;
 
    Invalid_Header_Id : exception;
@@ -34,7 +41,7 @@ package Header_Reader is
 
    function Get_Compression_Algorithm (Raw_Value : UInt32) return Compression_Algorithms;
 
-   function Is_Valid_End_Of_Header (Raw_Value : End_Of_Header_Field) return Boolean;
+   function Is_Valid_End_Of_Header (Raw_Value : End_Of_Header_Value) return Boolean;
 
    procedure Read_Encryption_Algorithm (Data_Stream : Stream_Access; Header : out Database_Header);
 
@@ -43,6 +50,10 @@ package Header_Reader is
    procedure Read_Encryption_IV (Data_Stream : Stream_Access; Header : in out Database_Header);
 
    procedure Read_KDF_Parameters (Data_Stream : Stream_Access; Header : out Database_Header);
+
+   procedure Read_Public_Custom_Data (Data_Stream : Stream_Access; Header : out Database_Header);
+
+   procedure Read_End_Of_Header (Data_Stream : Stream_Access; Header : out Database_Header);
 
 private
 

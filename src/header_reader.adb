@@ -26,14 +26,10 @@ package body Header_Reader is
          when KDF_Parameters =>
             Read_KDF_Parameters (Data_Stream, Header);
          when Public_Custom_Data =>
-            null;
+            Read_Public_Custom_Data (Data_Stream, Header);
          when End_Of_Header =>
-            declare
-               End_Of_Header_Field_Value : End_Of_Header_Field := [others => 0];
-            begin
-               End_Of_Header_Field'Read (Data_Stream, End_Of_Header_Field_Value);
-               exit;
-            end;
+            Read_End_Of_Header (Data_Stream, Header);
+            exit;
          end case;
       end loop;
 
@@ -87,7 +83,7 @@ package body Header_Reader is
       end case;
    end Get_Compression_Algorithm;
 
-   function Is_Valid_End_Of_Header (Raw_Value : End_Of_Header_Field) return Boolean is
+   function Is_Valid_End_Of_Header (Raw_Value : End_Of_Header_Value) return Boolean is
    begin
       return Raw_Value = [0, 0, 0, 0];
    end Is_Valid_End_Of_Header;
@@ -125,7 +121,6 @@ package body Header_Reader is
    end Read_Encryption_IV;
 
    procedure Read_KDF_Parameters (Data_Stream : Stream_Access; Header : out Database_Header) is
-      Basic_KDF : KDF;
    begin
       Byte'Read (Data_Stream, Header.KDF_Parameters.Version.Minor);
       Byte'Read (Data_Stream, Header.KDF_Parameters.Version.Major);
@@ -133,5 +128,18 @@ package body Header_Reader is
       Header.KDF_Parameters.Values := Variant_Dictionary.Read (Data_Stream);
       Header.KDF_Parameters.UUID := Get_KDF_UUID (Header.KDF_Parameters.Values ("$UUID"));
    end Read_KDF_Parameters;
+
+   procedure Read_Public_Custom_Data (Data_Stream : Stream_Access; Header : out Database_Header) is
+   begin
+      Byte'Read (Data_Stream, Header.Public_Custom_Data.Version.Minor);
+      Byte'Read (Data_Stream, Header.Public_Custom_Data.Version.Major);
+
+      Header.Public_Custom_Data.Values := Variant_Dictionary.Read (Data_Stream);
+   end Read_Public_Custom_Data;
+
+   procedure Read_End_Of_Header (Data_Stream : Stream_Access; Header : out Database_Header) is
+   begin
+      End_Of_Header_Value'Read (Data_Stream, Header.End_Of_Header);
+   end Read_End_Of_Header;
 
 end Header_Reader;

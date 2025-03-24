@@ -1,17 +1,13 @@
 with Ada.Streams.Stream_IO; use Ada.Streams.Stream_IO;
 with Primitives; use Primitives;
+with Variant_Dictionary;
 
 package KDF_Parameters is
 
    type KDF_UUID is (AES_KDF, Argon_2_D, Argon_2_Id);
    
-   type KDF_Dictionary_Version is record
-      Major : Byte;
-      Minor : Byte;
-   end record;
-   
-   type KDF is tagged record
-      Version : KDF_Dictionary_Version;
+   type KDF is record
+      Version : Variant_Dictionary.Verion;
       UUID : KDF_UUID;
       Values : Byte_Array_Maps.Map;
    end record;
