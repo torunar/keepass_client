@@ -29,11 +29,24 @@ package Header_Reader is
       End_Of_Header : End_Of_Header_Value;
    end record;
 
+   function Get_Header (Database_File : File_Type) return Database_Header;
+
    Invalid_Header_Id : exception;
    Unknown_Encryption_Algorithm : exception;
    Unknown_Compression_Algorithm : exception;
 
-   function Get_Header (Database_File : File_Type) return Database_Header;
+private
+
+   Raw_Encryption_Algorithm : constant Byte := 2;
+   Raw_Compression_Algorithm : constant Byte := 3;
+   Raw_Master_Salt : constant Byte := 4;
+   Raw_Encryption_IV : constant Byte := 7;
+   Raw_KDF_Parameters : constant Byte := 11;
+   Raw_Public_Custom_Data : constant Byte := 12;
+   Raw_End_Of_Header : constant Byte := 0;
+
+   AES_256_UUID : constant UUID := [49, 193, 242, 230, 191, 113, 67, 80, 190, 88, 5, 33, 106, 252, 90, 255]; -- 0x31C1F2E6BF714350BE5805216AFC5AFF
+   Cha_Cha_20_UUID : constant UUID := [214, 3, 138, 43, 139, 111, 76, 181, 165, 36, 51, 154, 49, 219, 181, 154]; -- 0xD6038A2B8B6F4CB5A524339A31DBB59A
 
    function Get_Field_Id (Raw_Value : Byte) return Field_Id;
 
@@ -54,18 +67,5 @@ package Header_Reader is
    procedure Read_Public_Custom_Data (Data_Stream : Stream_Access; Header : out Database_Header);
 
    procedure Read_End_Of_Header (Data_Stream : Stream_Access; Header : out Database_Header);
-
-private
-
-   Raw_Encryption_Algorithm : constant Byte := 2;
-   Raw_Compression_Algorithm : constant Byte := 3;
-   Raw_Master_Salt : constant Byte := 4;
-   Raw_Encryption_IV : constant Byte := 7;
-   Raw_KDF_Parameters : constant Byte := 11;
-   Raw_Public_Custom_Data : constant Byte := 12;
-   Raw_End_Of_Header : constant Byte := 0;
-
-   AES_256_UUID : constant UUID := [49, 193, 242, 230, 191, 113, 67, 80, 190, 88, 5, 33, 106, 252, 90, 255]; -- 0x31C1F2E6BF714350BE5805216AFC5AFF
-   Cha_Cha_20_UUID : constant UUID := [214, 3, 138, 43, 139, 111, 76, 181, 165, 36, 51, 154, 49, 219, 181, 154]; -- 0xD6038A2B8B6F4CB5A524339A31DBB59A
 
 end Header_Reader;

@@ -1,5 +1,3 @@
-with Variant_Dictionary;
-
 package body Header_Reader is
 
    function Get_Header (Database_File : File_Type) return Database_Header is
@@ -85,7 +83,7 @@ package body Header_Reader is
 
    function Is_Valid_End_Of_Header (Raw_Value : End_Of_Header_Value) return Boolean is
    begin
-      return Raw_Value = [0, 0, 0, 0];
+      return Raw_Value = [13, 10, 13, 10];
    end Is_Valid_End_Of_Header;
 
    procedure Read_Encryption_Algorithm (Data_Stream : Stream_Access; Header : out Database_Header) is

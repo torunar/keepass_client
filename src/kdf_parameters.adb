@@ -17,11 +17,4 @@ package body KDF_Parameters is
       raise Unknown_KDF_UUID;
    end Get_KDF_UUID;
 
-   procedure Read_KDF_UUID (Data_Stream : Stream_Access; Value : in out KDF) is
-      Raw_Value : UUID;
-   begin
-      UUID'Read (Data_Stream, Raw_Value);
-      Value.UUID := Get_KDF_UUID (Raw_Value);
-   end Read_KDF_UUID;
-
 end KDF_Parameters;
